@@ -1,7 +1,9 @@
 package cz.eclub.xtherm.xtherm;
 
 import android.animation.ObjectAnimator;
+import android.media.AudioManager;
 import android.media.Image;
+import android.media.ToneGenerator;
 import android.nfc.NfcAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -25,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
     ProgressBar temperatureProgress;
     ImageView karaImage;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
 
         humidityText=((TextView)findViewById(R.id.textView2));
         temperatureText=((TextView)findViewById(R.id.textView3));
+
 
 
     }
@@ -53,19 +57,9 @@ public class MainActivity extends AppCompatActivity {
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-
-
-
-                humidityText.setText(String.format("%.0f",humidity)+"%");
-
-
-                temperatureText.setText(String.format("%.1f",temperature)+"°C");
-
-
-
-
-
-            }
+            humidityText.setText(String.format("%.0f",humidity)+"%");
+            temperatureText.setText(String.format("%.1f",temperature)+"°C");
+        }
         });
     }
 }

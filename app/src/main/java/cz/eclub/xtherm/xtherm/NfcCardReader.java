@@ -1,5 +1,7 @@
 package cz.eclub.xtherm.xtherm;
 
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.NdefFormatable;
@@ -17,10 +19,13 @@ import java.util.concurrent.TimeUnit;
  */
 public class NfcCardReader implements NfcAdapter.ReaderCallback {
     private MainActivity mainActivity;
+    private byte old = -1;
+    ToneGenerator toneG;
 
 
     public NfcCardReader(MainActivity mainActivity){
         this.mainActivity=mainActivity;
+        toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
     }
 
     @Override
@@ -45,10 +50,9 @@ public class NfcCardReader implements NfcAdapter.ReaderCallback {
             public void run() {
                 try {
                     byte[] a = {0x02,0x23,0x00,0x01}; //sys info
-                    Log.d("SHIT","Reading");
-                    byte[] b = new byte[0];
-                    b = nfcV.transceive(a);
-                    processResult(b);
+
+
+                    processResult(nfcV.transceive(a));
 
                 } catch (IOException e) {
                     Log.e("SHIT",e.getMessage());
@@ -70,10 +74,19 @@ public class NfcCardReader implements NfcAdapter.ReaderCallback {
         double humidity = ((125*h)/65536)-6;
         double temperature = ((175.72*t)/65536)-46.85;
 
-        Log.d("SHIT",ByteArrayToHexString(result));
-        Log.d("SHIT","H: "+humidity+" T: "+temperature);
+        Log.d("X.THERM",ByteArrayToHexString(result));
 
-        mainActivity.updateUI(humidity,temperature);
+        if(humidity>=0 && humidity<=100){
+            if(temperature>=-30 && temperature<=80){
+                toneG.startTone(ToneGenerator.TONE_CDMA_DIAL_TONE_LITE, 200);
+                mainActivity.updateUI(humidity,temperature);
+            }
+        }
+
+
+
+
+
 
     }
 
