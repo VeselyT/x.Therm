@@ -59,6 +59,7 @@ public class NfcCardReader implements NfcAdapter.ReaderCallback {
         } catch (IOException e) {
             e.printStackTrace();
             //scheduledExecutorService.shutdown();
+            
         }
 
 
