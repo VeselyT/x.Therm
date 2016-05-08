@@ -23,9 +23,8 @@ public class MainActivity extends AppCompatActivity {
 
     TextView humidityText;
     TextView temperatureText;
-    ProgressBar humidityProgress;
-    ProgressBar temperatureProgress;
-    ImageView karaImage;
+
+    TextView pageText;
 
 
     @Override
@@ -35,9 +34,7 @@ public class MainActivity extends AppCompatActivity {
 
         humidityText=((TextView)findViewById(R.id.textView2));
         temperatureText=((TextView)findViewById(R.id.textView3));
-
-
-
+        pageText=((TextView)findViewById(R.id.textView5));
     }
 
 
@@ -53,12 +50,13 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void updateUI(final double humidity, final double temperature){
+    public void updateUI(final double humidity, final double temperature,final String pages){
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
             humidityText.setText(String.format("%.0f",humidity)+"%");
             temperatureText.setText(String.format("%.1f",temperature)+"°C");
+            pageText.setText(pages);
         }
         });
     }

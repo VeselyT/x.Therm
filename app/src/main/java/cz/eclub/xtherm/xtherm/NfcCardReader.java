@@ -20,50 +20,47 @@ import java.util.concurrent.TimeUnit;
 public class NfcCardReader implements NfcAdapter.ReaderCallback {
     private MainActivity mainActivity;
     private byte old = -1;
-    ToneGenerator toneG;
+    static NfcV nfcV;
+    static ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+    private Thread t;
 
 
     public NfcCardReader(MainActivity mainActivity){
         this.mainActivity=mainActivity;
-        toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
+
     }
 
     @Override
     public void onTagDiscovered(Tag tag) {
-        Log.d("SHIT","read "+ Arrays.toString(tag.getTechList()));
-
-
-        final NfcV nfcV = NfcV.get(tag);
-        //byte[] a = {0x02,0x2B}; //sys info
-        byte[] a = {0x02,0x23,0x00,0x01}; //sys info
-
-        try {
-            nfcV.connect();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-
-        Runnable r = new Runnable() {
+        Log.d("X.THERM","discovered");
+        t = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    byte[] a = {0x02,0x23,0x00,0x01}; //sys info
-
-
+                    Log.d("X.THERM","READING");
+                    byte[] a = {0x02,0x23,0x00,0x02}; //sys info
                     processResult(nfcV.transceive(a));
-
                 } catch (IOException e) {
-                    Log.e("SHIT",e.getMessage());
+                    Log.e("X.THERM",e.getMessage());
                     scheduledExecutorService.shutdown();
                 }
             }
-        };
-        Thread t = new Thread(r);
+        });
         t.setPriority(Thread.MAX_PRIORITY);
+        scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
-        scheduledExecutorService.scheduleAtFixedRate(t,0,750, TimeUnit.MILLISECONDS);
+        nfcV = NfcV.get(tag);
+        //byte[] a = {0x02,0x2B}; //sys info
+        //byte[] a = {0x02,0x23,0x0,0x01}; //sys info
+
+        try {
+            nfcV.connect();
+            scheduledExecutorService.scheduleAtFixedRate(t,0,750, TimeUnit.MILLISECONDS);
+        } catch (IOException e) {
+            e.printStackTrace();
+            //scheduledExecutorService.shutdown();
+        }
+
 
     }
 
@@ -74,12 +71,15 @@ public class NfcCardReader implements NfcAdapter.ReaderCallback {
         double humidity = ((125*h)/65536)-6;
         double temperature = ((175.72*t)/65536)-46.85;
 
-        Log.d("X.THERM",ByteArrayToHexString(result));
+        String pages = ByteArrayToHexString(result);
+        Log.d("X.THERM",pages);
+
+        pages = pages.substring(2,10)+"\n"+pages.substring(10,18)+"\n"+pages.substring(18,26);
+        Log.d("X.THERM",pages);
 
         if(humidity>=0 && humidity<=100){
             if(temperature>=-30 && temperature<=80){
-                toneG.startTone(ToneGenerator.TONE_CDMA_DIAL_TONE_LITE, 200);
-                mainActivity.updateUI(humidity,temperature);
+                mainActivity.updateUI(humidity,temperature,pages);
             }
         }
 
