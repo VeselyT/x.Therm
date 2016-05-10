@@ -25,6 +25,8 @@ public class MainActivity extends AppCompatActivity {
     TextView temperatureText;
 
     TextView pageText;
+    private NfcCardReader nfcCardReader;
+    private NfcAdapter nfcAdapter;
 
 
     @Override
@@ -43,14 +45,21 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        NfcCardReader nfcCardReader = new NfcCardReader(this);
-
-        NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(this);
+        nfcCardReader = new NfcCardReader(this);
+        nfcAdapter = NfcAdapter.getDefaultAdapter(this);
         nfcAdapter.enableReaderMode(this,nfcCardReader,READER_FLAGS,null);
-
     }
 
-    public void updateUI(final double humidity, final double temperature,final String pages){
+    @Override
+    protected void onPause() {
+        super.onPause();
+        nfcAdapter.disableReaderMode(this);
+        nfcCardReader.stop();
+        nfcAdapter=null;
+        nfcCardReader=null;
+    }
+
+    public void updateUI(final double humidity, final double temperature, final String pages){
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {

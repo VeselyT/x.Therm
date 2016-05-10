@@ -10,8 +10,10 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -20,49 +22,48 @@ import java.util.concurrent.TimeUnit;
 public class NfcCardReader implements NfcAdapter.ReaderCallback {
     private MainActivity mainActivity;
     private byte old = -1;
-    static NfcV nfcV;
-    static ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+    private NfcV nfcV;
+    private ScheduledExecutorService scheduledExecutorService;
     private Thread t;
-
+    private final Object lock = new Object();
+    private ScheduledFuture<?> future;
 
     public NfcCardReader(MainActivity mainActivity){
         this.mainActivity=mainActivity;
-
-    }
-
-    @Override
-    public void onTagDiscovered(Tag tag) {
-        Log.d("X.THERM","discovered");
+        scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
         t = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     Log.d("X.THERM","READING");
                     byte[] a = {0x02,0x23,0x00,0x02}; //sys info
-                    processResult(nfcV.transceive(a));
+                    synchronized (lock) {
+                        processResult(nfcV.transceive(a));
+                    }
                 } catch (IOException e) {
                     Log.e("X.THERM",e.getMessage());
-                    scheduledExecutorService.shutdown();
                 }
             }
         });
         t.setPriority(Thread.MAX_PRIORITY);
-        scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+    }
 
-        nfcV = NfcV.get(tag);
-        //byte[] a = {0x02,0x2B}; //sys info
-        //byte[] a = {0x02,0x23,0x0,0x01}; //sys info
-
-        try {
-            nfcV.connect();
-            scheduledExecutorService.scheduleAtFixedRate(t,0,750, TimeUnit.MILLISECONDS);
-        } catch (IOException e) {
-            e.printStackTrace();
-            //scheduledExecutorService.shutdown();
-            
+    @Override
+    public void onTagDiscovered(Tag tag) {
+        Log.d("X.THERM","discovered");
+        synchronized (lock) {
+            if (future != null) {
+                future.cancel(true);
+                future = null;
+            }
+            nfcV = NfcV.get(tag);
+            try {
+                nfcV.connect();
+                future = scheduledExecutorService.scheduleAtFixedRate(t, 0, 750, TimeUnit.MILLISECONDS);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-
-
     }
 
     private void processResult(byte[] result){
@@ -83,12 +84,6 @@ public class NfcCardReader implements NfcAdapter.ReaderCallback {
                 mainActivity.updateUI(humidity,temperature,pages);
             }
         }
-
-
-
-
-
-
     }
 
 
@@ -108,5 +103,14 @@ public class NfcCardReader implements NfcAdapter.ReaderCallback {
         int value = (second & 0xFF) << (Byte.SIZE * 1);
         value |= (first & 0xFF);
         return value;
+    }
+
+    public void stop() {
+        synchronized (lock) {
+            if (future != null) {
+                future.cancel(true);
+            }
+            scheduledExecutorService.shutdown();
+        }
     }
 }
