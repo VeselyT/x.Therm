@@ -1,72 +1,86 @@
 package cz.eclub.xtherm.xtherm;
 
-import android.animation.ObjectAnimator;
-import android.media.AudioManager;
-import android.media.Image;
-import android.media.ToneGenerator;
+import android.content.Intent;
 import android.nfc.NfcAdapter;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.WindowManager;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.LinearInterpolator;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 
-import org.w3c.dom.Text;
+import org.androidannotations.annotations.AfterInject;
+import org.androidannotations.annotations.AfterViews;
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EActivity;
+import org.androidannotations.annotations.OptionsItem;
+import org.androidannotations.annotations.OptionsMenu;
+import org.androidannotations.annotations.ViewById;
 
+import cz.eclub.xtherm.xtherm.preferences.SettingsActivity_;
+import cz.eclub.xtherm.xtherm.ui.MainFragment_;
+import cz.eclub.xtherm.xtherm.utils.NFCDisabledException;
+import cz.eclub.xtherm.xtherm.utils.NFCNotSupportedException;
+import cz.eclub.xtherm.xtherm.utils.NFCUtils;
+
+@EActivity(R.layout.activity_main)
+@OptionsMenu(R.menu.main_menu)
 public class MainActivity extends AppCompatActivity {
 
     private static int READER_FLAGS = NfcAdapter.FLAG_READER_NFC_V;
 
+    @ViewById
+    protected Toolbar toolbar;
 
-    TextView humidityText;
-    TextView temperatureText;
+    @Bean
+    protected NfcCardReader nfcCardReader;
 
-    TextView pageText;
-    private NfcCardReader nfcCardReader;
     private NfcAdapter nfcAdapter;
 
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        humidityText=((TextView)findViewById(R.id.textView2));
-        temperatureText=((TextView)findViewById(R.id.textView3));
-        pageText=((TextView)findViewById(R.id.textView5));
+    @AfterViews
+    protected void setActionBar() {
+        setSupportActionBar(toolbar);
     }
 
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        getFragmentManager().beginTransaction().replace(R.id.container, new MainFragment_.FragmentBuilder_().build()).commit();
+    }
+
+    public void initNFC() {
+        if (nfcCardReader != null) {
+            nfcCardReader.init();
+        }
+        nfcAdapter = NfcAdapter.getDefaultAdapter(this);
+        try {
+            NFCUtils.checkNFCExists(nfcAdapter, this);
+            NFCUtils.checkNFCEnabled(nfcAdapter, this);
+            nfcAdapter.enableReaderMode(this, nfcCardReader, READER_FLAGS, null);
+        } catch (NFCDisabledException | NFCNotSupportedException e) {
+            // nothing to do - exceptions are handled internally by NFCUtils
+        }
+    }
 
     @Override
     protected void onResume() {
         super.onResume();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
-        nfcCardReader = new NfcCardReader(this);
-        nfcAdapter = NfcAdapter.getDefaultAdapter(this);
-        nfcAdapter.enableReaderMode(this,nfcCardReader,READER_FLAGS,null);
+        initNFC();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        nfcAdapter.disableReaderMode(this);
-        nfcCardReader.stop();
-        nfcAdapter=null;
-        nfcCardReader=null;
+        if (nfcAdapter != null) {
+            nfcAdapter.disableReaderMode(this);
+        }
+        if (nfcCardReader != null) {
+            nfcCardReader.stop();
+        }
+        nfcAdapter = null;
     }
 
-    public void updateUI(final double humidity, final double temperature, final String pages){
-        this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-            humidityText.setText(String.format("%.0f",humidity)+"%");
-            temperatureText.setText(String.format("%.1f",temperature)+"°C");
-            pageText.setText(pages);
-        }
-        });
+    @OptionsItem(R.id.menu_button_preferences)
+    public void onPreferencesMenuClicked() {
+        startActivity(new Intent(this, SettingsActivity_.class));
     }
 }

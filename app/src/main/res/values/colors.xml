@@ -1,6 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF4081</color>
+    <!--<color name="myPrimaryColor">#3F51B5</color>-->
+    <!--<color name="myPrimaryDarkColor">#303f9f</color>-->
+    <!--<color name="myAccentColor">#4caf50</color>-->
+    <!--<color name="myPrimaryColor">#689f38</color>-->
+    <!--<color name="myPrimaryDarkColor">#558b2f</color>-->
+    <color name="myPrimaryColor">#37474F</color>
+    <color name="myPrimaryDarkColor">#263238</color>
+    <color name="myPrimaryDarkColorAlpha27">#c6cbe5</color>
+    <color name="myAccentColor">#607d8b</color>
+    <!--<color name="myAccentColor">#9e9d24</color>-->
+    <color name="myDrawerBackground">#FFFFFF</color>
+    <color name="myWindowBackground">#FFFFFF</color>
+    <color name="myWindowBackgroundGray">#eeeeee</color>
+    <color name="myTextPrimaryColor">#000000</color>
+    <color name="myNavigationColor">#000000</color>
+    <color name="selected_gray">#f5f5f5</color>
+    <color name="gray">#bdbdbd</color>
+    <color name="black">#000</color>
+    <color name="black54">#8a000000</color>
+    <color name="black87">#de000000</color>
+    <color name="black14">#24000000</color>
+    <color name="black27">#45000000</color>
+    <color name="white">#ffffff</color>
+
 </resources>
